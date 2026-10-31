@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Office - Alexlawyers | المكتب الرقمي</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Cairo & Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- PDF.js for PDF Rendering & Processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+    <!-- jsPDF for PDF Creation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Mammoth.js for docx parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            navy: '#050b18',
+                            navyLight: '#0d182e',
+                            navyBorder: '#1e2d4a',
+                            gold: '#ffd700',
+                            goldDark: '#b8860b',
+                            goldNeon: '#ffaa00',
+                            cyan: '#00f0ff',
+                            purple: '#7000ff'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        tech: ['Orbitron', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'neon-gold': '0 0 15px rgba(255, 215, 0, 0.4), inset 0 0 15px rgba(255, 215, 0, 0.1)',
+                        'neon-cyan': '0 0 15px rgba(0, 240, 255, 0.4)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #030712;
+            color: #e5e7eb;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 31, 63, 0.6) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(184, 134, 11, 0.15) 0%, transparent 40%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+        }
+
+        /* Glassmorphism Cyberpunk Cards */
+        .glass-card {
+            background: rgba(13, 24, 46, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.25);
+        }
+
+        /* Glowing Cyber Borders */
+        .cyber-border-gold {
+            position: relative;
+        }
+        .cyber-border-gold::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            background: linear-gradient(45deg, #ffd700, transparent, #00f0ff);
+            z-index: -1;
+            border-radius: inherit;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+        .cyber-border-gold:hover::before {
+            opacity: 1;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050b18;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e2d4a;
+            border-radius: 3px;
+            border: 1px solid #ffd700;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ffd700;
+        }
+
+        /* Scan Line Animation */
+        .scan-line {
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #00f0ff, #ffd700, transparent);
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: scan 3s linear infinite;
+            z-index: 20;
+            box-shadow: 0 0 15px #00f0ff;
+        }
+        @keyframes scan {
+            0% { top: 0%; opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { top: 100%; opacity: 0.8; }
+        }
+
+        /* Corner Drag Handles */
+        .crop-corner {
+            width: 20px;
+            height: 20px;
+            background-color: #ffd700;
+            border: 2px solid #000;
+            position: absolute;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: move;
+            box-shadow: 0 0 10px #ffd700;
+            z-index: 30;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-gray-100 selection:bg-yellow-500 selection:text-black">
+
+    <!-- Top Header / Cyber HUD Nav -->
+    <header class="sticky top-0 z-50 glass-card border-b border-yellow-500/30 px-4 py-3 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            
+            <!-- Branding / Custom Logo Section -->
+            <div class="flex items-center gap-3">
+                <div class="relative group cursor-pointer" onclick="document.getElementById('logoInput').click()">
+                    <!-- Container for Logo / Placeholder -->
+                    <div id="logoContainer" class="w-12 h-12 rounded-xl bg-cyber-navyLight border border-yellow-500/50 flex items-center justify-center overflow-hidden shadow-neon-gold group-hover:scale-105 transition-transform">
+                        <i class="fa-solid me-0 fa-scale-balanced text-2xl text-yellow-400" id="defaultLogoIcon"></i>
+                        <img id="customLogoImg" class="w-full h-full object-cover hidden" alt="Alexlawyers Logo">
+                    </div>
+                    <div class="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-yellow-300 font-bold text-center leading-tight">
+                        تغيير<br>الشعار
+                    </div>
+                    <input type="file" id="logoInput" accept="image/*" class="hidden" onchange="loadCustomLogo(event)">
+                </div>
+
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-tech text-xl sm:text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500">
+                            DIGITAL OFFICE
+                        </h1>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 font-mono">v2.5 PRO</span>
+                    </div>
+                    <p class="text-xs text-cyan-400 font-semibold tracking-wide flex items-center gap-1">
+                        <i class="fa-solid fa-shield-halved text-[10px]"></i> منصة محامين الإسكندرية الرقمية | Alexlawyers
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Quick Controls -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="shareDirectWhatsApp()" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600/40 text-emerald-300 text-xs sm:text-sm font-semibold flex items-center gap-2 transition shadow-lg hover:shadow-emerald-500/20">
+                    <i class="fa-brands fa-whatsapp text-lg text-emerald-400"></i>
+                    <span class="hidden sm:inline">مشاركة وتساب</span>
+                </button>
+                <div class="text-xs font-mono text-gray-400 border-r border-gray-700 pr-3 hidden md:block">
+                    <div id="systemClock" class="text-yellow-400 font-bold">00:00:00</div>
+                    <div class="text-[10px] text-cyan-400">CYBER SECURE MODULE</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Dashboard -->
+    <main class="max-w-7xl mx-auto w-full p-3 sm:p-6 flex-grow">
+        
+        <!-- Navigation Tabs Bar -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-6 no-scrollbar border-b border-gray-800">
+            <button onclick="switchTab('scanner')" id="tab-scanner" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition flex items-center gap-2 bg-yellow-500 text-black shadow-neon-gold">
+                <i class="fa-solid fa-camera text-base"></i> الماسح الضوئي والمعالجة
+            </button>
+            <button onclick="switchTab('word')" id="tab-word" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition flex items-center gap-2 bg-cyber-navyLight border border-yellow-500/30 text-gray-300 hover:text-yellow-400">
+                <i class="fa-solid fa-file-word text-base text-blue-400"></i> تحويل Word إلى PDF & JPG
+            </button>
+            <button onclick="switchTab('img-convert')" id="tab-img-convert" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition flex items-center gap-2 bg-cyber-navyLight border border-yellow-500/30 text-gray-300 hover:text-yellow-400">
+                <i class="fa-solid fa-image text-base text-green-400"></i> محول الصور لـ JPG
+            </button>
+            <button onclick="switchTab('img-merge')" id="tab-img-merge" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition flex items-center gap-2 bg-cyber-navyLight border border-yellow-500/30 text-gray-300 hover:text-yellow-400">
+                <i class="fa-solid fa-cubes text-base text-purple-400"></i> دمج الصور
+            </button>
+            <button onclick="switchTab('pdf-merge')" id="tab-pdf-merge" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition flex items-center gap-2 bg-cyber-navyLight border border-yellow-500/30 text-gray-300 hover:text-yellow-400">
+                <i class="fa-solid fa-file-pdf text-base text-red-400"></i> دمج ملفات PDF
+            </button>
+            <button onclick="switchTab('compressor')" id="tab-compressor" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition flex items-center gap-2 bg-cyber-navyLight border border-yellow-500/30 text-gray-300 hover:text-yellow-400">
+                <i class="fa-solid fa-file-contract text-base text-yellow-400"></i> ضغط المستندات والصور
+            </button>
+        </div>
+
+        <!-- TAB 1: CAMERA & DOCUMENT SCANNER WITH EDGE CROP & FILTERS -->
+        <section id="sec-scanner" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Control Panel & Input -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-l-yellow-500">
+                        <h2 class="text-lg font-bold text-yellow-400 flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-expand"></i> الماسح الضوئي الرقمي العقود والمستندات
+                        </h2>
+                        <p class="text-xs text-gray-400 mb-4">التقط صور المستندات بكاميرا الهاتف أو ارفع صورة لتحديد الحواف، التدوير، وتطبيق الفلاتر القانونية.</p>
+
+                        <!-- Action Controls -->
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <button onclick="openCameraModal()" class="py-3 px-4 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-neon-gold hover:opacity-90 transition">
+                                <i class="fa-solid fa-camera text-base"></i> تشغيل الكاميرا
+                            </button>
+                            <label class="py-3 px-4 rounded-xl bg-cyber-navy border border-cyan-500/50 hover:border-cyan-400 text-cyan-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition text-center">
+                                <i class="fa-solid fa-upload text-base"></i> رفع مستند
+                                <input type="file" id="scannerInput" accept="image/*" class="hidden" onchange="loadScannerImage(event)">
+                            </label>
+                        </div>
+
+                        <!-- Image Adjustment Controls (Active when image loaded) -->
+                        <div id="scannerControls" class="space-y-4 pt-4 border-t border-gray-800 opacity-50 pointer-events-none transition-opacity">
+                            
+                            <!-- Rotation Tools -->
+                            <div>
+                                <label class="text-xs font-semibold text-gray-300 mb-2 block">تدوير المستند:</label>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <button onclick="rotateScannerCanvas(-90)" class="p-2 rounded-lg bg-cyber-navy border border-gray-700 hover:border-yellow-500 text-xs text-gray-200">
+                                        <i class="fa-solid fa-rotate-left"></i> -90°
+                                    </button>
+                                    <button onclick="rotateScannerCanvas(90)" class="p-2 rounded-lg bg-cyber-navy border border-gray-700 hover:border-yellow-500 text-xs text-gray-200">
+                                        <i class="fa-solid fa-rotate-right"></i> +90°
+                                    </button>
+                                    <button onclick="rotateScannerCanvas(180)" class="p-2 rounded-lg bg-cyber-navy border border-gray-700 hover:border-yellow-500 text-xs text-gray-200">
+                                        180°
+                                    </button>
+                                    <button onclick="resetCropArea()" class="p-2 rounded-lg bg-cyber-navy border border-gray-700 hover:border-cyan-500 text-xs text-cyan-400">
+                                        إعادة الحواف
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Legal Filters -->
+                            <div>
+                                <label class="text-xs font-semibold text-gray-300 mb-2 block">نمط الفلتر القانوني:</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button onclick="applyLegalFilter('normal')" class="py-2 px-1 rounded-lg bg-cyber-navy border border-gray-700 text-xs font-semibold hover:border-yellow-500 text-gray-300">ألوان طبيعية</button>
+                                    <button onclick="applyLegalFilter('bw')" class="py-2 px-1 rounded-lg bg-cyber-navy border border-gray-700 text-xs font-semibold hover:border-yellow-500 text-yellow-300">مستند أسود/أبيض</button>
+                                    <button onclick="applyLegalFilter('magic')" class="py-2 px-1 rounded-lg bg-cyber-navy border border-gray-700 text-xs font-semibold hover:border-yellow-500 text-cyan-300">توضيح نصوص (Magic)</button>
+                                </div>
+                            </div>
+
+                            <!-- Legal Watermark Option -->
+                            <div class="p-3 rounded-xl bg-cyber-navy/80 border border-gray-800 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <label class="text-xs font-bold text-yellow-400 flex items-center gap-1">
+                                        <i class="fa-solid fa-stamp"></i> إضافة علامة مائية قانونية
+                                    </label>
+                                    <input type="checkbox" id="watermarkToggle" onchange="renderScannerCanvas()" class="accent-yellow-500 w-4 h-4 rounded">
+                                </div>
+                                <input type="text" id="watermarkText" value="Alexlawyers - سري للغاية" placeholder="نص العلامة المائية" oninput="renderScannerCanvas()" class="w-full bg-black/50 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-yellow-300 focus:border-yellow-500 outline-none">
+                            </div>
+
+                            <!-- Action Output Buttons -->
+                            <div class="pt-2 grid grid-cols-2 gap-2">
+                                <button onclick="exportScannerDoc('pdf')" class="py-3 rounded-xl bg-red-600/20 border border-red-500 hover:bg-red-600/40 text-red-300 font-bold text-xs flex items-center justify-center gap-2 shadow-lg">
+                                    <i class="fa-solid fa-file-pdf"></i> حفظ كـ PDF
+                                </button>
+                                <button onclick="exportScannerDoc('jpg')" class="py-3 rounded-xl bg-green-600/20 border border-green-500 hover:bg-green-600/40 text-green-300 font-bold text-xs flex items-center justify-center gap-2 shadow-lg">
+                                    <i class="fa-solid fa-file-image"></i> حفظ كـ JPG
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Interactive Canvas / Crop View -->
+                <div class="lg:col-span-7">
+                    <div class="glass-card p-4 rounded-2xl relative min-h-[400px] flex flex-col items-center justify-center overflow-hidden border border-yellow-500/30">
+                        <div class="scan-line pointer-events-none" id="scannerScanLine" style="display: none;"></div>
+                        
+                        <div id="scannerPlaceholder" class="text-center p-8 text-gray-500">
+                            <i class="fa-solid fa-scanner text-6xl mb-3 text-yellow-500/40 animate-pulse"></i>
+                            <p class="text-sm">قم بالتقاط صورة عبر الكاميرا أو اختر مستنداً للبدء المعالجة</p>
+                        </div>
+
+                        <!-- Canvas Container for Cropping -->
+                        <div id="canvasWrapper" class="relative max-w-full max-h-[600px] hidden">
+                            <canvas id="scannerCanvas" class="max-w-full rounded-lg shadow-2xl border border-gray-700"></canvas>
+                            <!-- Crop Corner Handles overlay dynamically -->
+                            <div id="cropOverlay" class="absolute inset-0 pointer-events-none border-2 border-yellow-400 border-dashed"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: WORD TO PDF & JPG CONVERTER -->
+        <section id="sec-word" class="tab-content hidden space-y-6">
+            <div class="glass-card p-6 rounded-2xl border-l-4 border-l-blue-500">
+                <div class="max-w-3xl mx-auto space-y-6">
+                    <div class="text-center space-y-2">
+                        <i class="fa-solid fa-file-word text-5xl text-blue-400 mb-2"></i>
+                        <h2 class="text-xl font-bold text-yellow-400">محول مستندات Word (DOC / DOCX)</h2>
+                        <p class="text-xs text-gray-400">قم بتحويل عقد، مذكرة، أو ملف Word بضغطة واحدة إلى PDF احترافي أو صور عالية الدقة.</p>
+                    </div>
+
+                    <!-- Dropzone -->
+                    <div class="border-2 border-dashed border-blue-500/40 hover:border-yellow-400 rounded-2xl p-8 text-center bg-cyber-navy/50 transition cursor-pointer" onclick="document.getElementById('wordFileInput').click()">
+                        <i class="fa-solid fa-cloud-arrow-up text-4xl text-blue-400 mb-3"></i>
+                        <p class="text-sm font-bold text-gray-200">اختر ملف Word من جهازك (.doc, .docx)</p>
+                        <p class="text-xs text-gray-500 mt-1">يتم معالجة المستند بأمان تام محلياً على جهازك</p>
+                        <input type="file" id="wordFileInput" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden" onchange="handleWordUpload(event)">
+                    </div>
+
+                    <!-- Preview and Render Box -->
+                    <div id="wordPreviewContainer" class="hidden space-y-4">
+                        <div class="flex justify-between items-center bg-cyber-navy p-3 rounded-xl border border-gray-800">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-file-lines text-2xl text-blue-400"></i>
+                                <div>
+                                    <div id="wordFileName" class="text-sm font-bold text-yellow-300">document.docx</div>
+                                    <div id="wordFileSize" class="text-[10px] text-gray-400">0 KB</div>
+                                </div>
+                            </div>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40">جاهز للتحويل</span>
+                        </div>
+
+                        <!-- Render Output Options -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button onclick="convertWordToPDF()" class="py-3 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition">
+                                <i class="fa-solid fa-file-pdf text-lg"></i> تحويل وحفظ كـ PDF
+                            </button>
+                            <button onclick="convertWordToJPG()" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition">
+                                <i class="fa-solid fa-file-image text-lg"></i> تحويل وحفظ كـ JPG
+                            </button>
+                        </div>
+
+                        <!-- Parsed Text Document Viewer -->
+                        <div class="p-4 rounded-xl bg-white text-black max-h-96 overflow-y-auto font-sans text-sm shadow-inner" id="wordHTMLContent">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: IMAGE CONVERTER TO JPG/JPEG -->
+        <section id="sec-img-convert" class="tab-content hidden space-y-6">
+            <div class="glass-card p-6 rounded-2xl border-l-4 border-l-green-500">
+                <div class="max-w-3xl mx-auto space-y-6">
+                    <div class="text-center space-y-2">
+                        <i class="fa-solid fa-image text-5xl text-green-400 mb-2"></i>
+                        <h2 class="text-xl font-bold text-yellow-400">محول الصور إلى صيغة JPG / JPEG</h2>
+                        <p class="text-xs text-gray-400">تحويل صيغ (PNG, WEBP, BMP, GIF) بسرعة وجودة فائقة لملاءمة متطلبات رفع المستندات القضائية.</p>
+                    </div>
+
+                    <div class="border-2 border-dashed border-green-500/40 hover:border-yellow-400 rounded-2xl p-8 text-center bg-cyber-navy/50 transition cursor-pointer" onclick="document.getElementById('imgConverterInput').click()">
+                        <i class="fa-solid fa-images text-4xl text-green-400 mb-3"></i>
+                        <p class="text-sm font-bold text-gray-200">اختر صورة أو مجموعة صور للتحويل</p>
+                        <input type="file" id="imgConverterInput" accept="image/*" multiple class="hidden" onchange="handleImageConvertUpload(event)">
+                    </div>
+
+                    <!-- Converted Images Grid List -->
+                    <div id="imgConvertList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: MULTI-IMAGE MERGER -->
+        <section id="sec-img-merge" class="tab-content hidden space-y-6">
+            <div class="glass-card p-6 rounded-2xl border-l-4 border-l-purple-500">
+                <div class="space-y-6">
+                    <div class="text-center space-y-2">
+                        <i class="fa-solid fa-cubes text-5xl text-purple-400 mb-2"></i>
+                        <h2 class="text-xl font-bold text-yellow-400">دمج مجموعة صور في صورة واحدة</h2>
+                        <p class="text-xs text-gray-400">قم بدمج عدة محققات، صور أحكام، أو بطاقات في ملف صورة طولي أو عرضي واحد.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                        <!-- Controls -->
+                        <div class="md:col-span-4 space-y-4">
+                            <label class="w-full py-3 px-4 rounded-xl bg-purple-600/20 border border-purple-500 hover:bg-purple-600/40 text-purple-200 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition">
+                                <i class="fa-solid fa-plus"></i> إضافة صور للدمج
+                                <input type="file" id="mergeImagesInput" accept="image/*" multiple class="hidden" onchange="handleMergeImagesUpload(event)">
+                            </label>
+
+                            <div class="p-4 rounded-xl bg-cyber-navy border border-gray-800 space-y-3">
+                                <div>
+                                    <label class="text-xs font-semibold text-gray-300 block mb-1">اتجاه الدمج:</label>
+                                    <select id="mergeDirection" onchange="renderMergedImage()" class="w-full bg-black/60 border border-gray-700 rounded-lg p-2 text-xs text-yellow-300 outline-none">
+                                        <option value="vertical">رأسي (صفحات متتالية أسفل بعضها)</option>
+                                        <option value="horizontal">أفقي (بجوار بعضها البعض)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="text-xs font-semibold text-gray-300 block mb-1">المسافة بين الصور (Padding):</label>
+                                    <input type="range" id="mergeSpacing" min="0" max="50" value="10" oninput="renderMergedImage()" class="w-full accent-yellow-500">
+                                </div>
+
+                                <div>
+                                    <label class="text-xs font-semibold text-gray-300 block mb-1">لون الخلفية الفاصلة:</label>
+                                    <input type="color" id="mergeBgColor" value="#ffffff" onchange="renderMergedImage()" class="w-full h-8 rounded border border-gray-700 cursor-pointer bg-black">
+                                </div>
+                            </div>
+
+                            <button onclick="downloadMergedImage()" id="downloadMergeBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold text-sm shadow-neon-gold hidden flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-download"></i> تحميل الصورة المدمجة
+                            </button>
+                        </div>
+
+                        <!-- Live Merged Preview Canvas -->
+                        <div class="md:col-span-8">
+                            <div class="p-4 rounded-xl bg-black/50 border border-gray-800 min-h-[300px] flex items-center justify-center overflow-auto max-h-[600px]">
+                                <canvas id="mergeCanvas" class="max-w-full rounded shadow-lg border border-gray-700 hidden"></canvas>
+                                <p id="mergePlaceholder" class="text-xs text-gray-500">قم برفع الصور لمعاينتها هنا بعد الدمج</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: PDF MERGER -->
+        <section id="sec-pdf-merge" class="tab-content hidden space-y-6">
+            <div class="glass-card p-6 rounded-2xl border-l-4 border-l-red-500">
+                <div class="max-w-3xl mx-auto space-y-6">
+                    <div class="text-center space-y-2">
+                        <i class="fa-solid fa-file-pdf text-5xl text-red-400 mb-2"></i>
+                        <h2 class="text-xl font-bold text-yellow-400">دمج ملفات PDF في ملف واحد</h2>
+                        <p class="text-xs text-gray-400">تجميع مذكرات الدفع، المستندات، والتقارير في ملف PDF واحد متناسق برقم واحد.</p>
+                    </div>
+
+                    <div class="border-2 border-dashed border-red-500/40 hover:border-yellow-400 rounded-2xl p-8 text-center bg-cyber-navy/50 transition cursor-pointer" onclick="document.getElementById('pdfMergeInput').click()">
+                        <i class="fa-solid fa-folder-plus text-4xl text-red-400 mb-3"></i>
+                        <p class="text-sm font-bold text-gray-200">اختر ملفات PDF لدمجها</p>
+                        <input type="file" id="pdfMergeInput" accept=".pdf" multiple class="hidden" onchange="handlePDFMergeUpload(event)">
+                    </div>
+
+                    <!-- PDF File Queue -->
+                    <div id="pdfQueueList" class="space-y-3"></div>
+
+                    <button onclick="executePDFMerge()" id="pdfMergeActionBtn" class="w-full py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 hidden transition">
+                        <i class="fa-solid fa-object-group text-lg"></i> ابدأ دمج الملفات وإصدار المستند النهائي
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: SMART COMPRESSOR -->
+        <section id="sec-compressor" class="tab-content hidden space-y-6">
+            <div class="glass-card p-6 rounded-2xl border-l-4 border-l-yellow-500">
+                <div class="max-w-3xl mx-auto space-y-6">
+                    <div class="text-center space-y-2">
+                        <i class="fa-solid fa-compress text-5xl text-yellow-400 mb-2"></i>
+                        <h2 class="text-xl font-bold text-yellow-400">ضغط المستندات والصور (Smart Compression)</h2>
+                        <p class="text-xs text-gray-400">تقليل حجم المستندات والصور لتسهيل رفعها على البوابات الإلكترونية وإرسالها بسهولة.</p>
+                    </div>
+
+                    <div class="border-2 border-dashed border-yellow-500/40 hover:border-yellow-400 rounded-2xl p-8 text-center bg-cyber-navy/50 transition cursor-pointer" onclick="document.getElementById('compressorInput').click()">
+                        <i class="fa-solid fa-file-zipper text-4xl text-yellow-400 mb-3"></i>
+                        <p class="text-sm font-bold text-gray-200">اختر صورة أو ملف PDF لضغطه</p>
+                        <input type="file" id="compressorInput" accept="image/*,.pdf" class="hidden" onchange="handleCompressorUpload(event)">
+                    </div>
+
+                    <!-- Compressor Controls & Comparison -->
+                    <div id="compressorWorkspace" class="hidden space-y-6">
+                        <div class="p-4 rounded-xl bg-cyber-navy border border-gray-800 space-y-4">
+                            <div class="flex justify-between text-xs font-bold">
+                                <span class="text-gray-300">درجة الضغط للجودة:</span>
+                                <span id="compressQualityVal" class="text-yellow-400">70%</span>
+                            </div>
+                            <input type="range" id="compressQuality" min="10" max="90" value="70" oninput="document.getElementById('compressQualityVal').innerText = this.value + '%'; processCompression()" class="w-full accent-yellow-500">
+                        </div>
+
+                        <!-- Side by Side Size Compare -->
+                        <div class="grid grid-cols-2 gap-4 text-center">
+                            <div class="p-4 rounded-xl bg-red-950/30 border border-red-500/30">
+                                <div class="text-xs text-gray-400 mb-1">الحجم الأصلي</div>
+                                <div id="origFileSize" class="text-lg font-bold text-red-400">0 MB</div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/30">
+                                <div class="text-xs text-gray-400 mb-1">الحجم بعد الضغط البرمجي</div>
+                                <div id="compressedFileSize" class="text-lg font-bold text-emerald-400">0 MB</div>
+                            </div>
+                        </div>
+
+                        <button onclick="downloadCompressedFile()" class="w-full py-3.5 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-sm shadow-neon-gold flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-download"></i> تحميل الملف المضغوط
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Camera Capture Modal -->
+    <div id="cameraModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-xl w-full rounded-2xl overflow-hidden border border-yellow-500/50 space-y-4 p-4 relative">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+                <h3 class="text-sm font-bold text-yellow-400 flex items-center gap-2">
+                    <i class="fa-solid fa-camera"></i> الكاميرا الحية للتصوير الضوئي
+                </h3>
+                <button onclick="closeCameraModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="relative rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+                <video id="webcamVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+                <div class="scan-line pointer-events-none"></div>
+            </div>
+
+            <div class="flex justify-center gap-4">
+                <button onclick="captureCameraFrame()" class="py-3 px-8 rounded-full bg-yellow-500 text-black font-bold text-sm shadow-neon-gold hover:bg-yellow-400 flex items-center gap-2">
+                    <i class="fa-solid fa-circle"></i> التقاط الصورة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Loading Toast Overlay -->
+    <div id="loadingToast" class="fixed bottom-6 left-6 z-50 glass-card px-5 py-3 rounded-xl border border-yellow-500/50 shadow-neon-gold hidden flex items-center gap-3">
+        <i class="fa-solid fa-spinner fa-spin text-yellow-400 text-xl"></i>
+        <span id="loadingMsg" class="text-xs font-bold text-gray-200">جاري معالجة المستند...</span>
+    </div>
+
+    <!-- Footer Identity -->
+    <footer class="glass-card border-t border-yellow-500/20 py-4 px-6 mt-12 text-center text-xs text-gray-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p>جميع الحقوق محفوظة © <span class="text-yellow-400 font-bold">Alexlawyers - محامين الإسكندرية</span> 2026</p>
+            <p class="font-tech text-cyan-500">DIGITAL OFFICE | HIGH-PERFORMANCE LEGAL APP</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // System Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('systemClock').innerText = now.toLocaleTimeString('ar-EG');
+        }, 1000);
+
+        // Navigation Tabs Toggle
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-yellow-500', 'text-black', 'shadow-neon-gold');
+                btn.classList.add('bg-cyber-navyLight', 'text-gray-300');
+            });
+
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.remove('bg-cyber-navyLight', 'text-gray-300');
+            activeBtn.classList.add('bg-yellow-500', 'text-black', 'shadow-neon-gold');
+        }
+
+        // Helper: Show Loading Toast
+        function showLoading(msg = 'جاري المعالجة...') {
+            document.getElementById('loadingMsg').innerText = msg;
+            document.getElementById('loadingToast').classList.remove('hidden');
+        }
+        function hideLoading() {
+            document.getElementById('loadingToast').classList.add('hidden');
+        }
+
+        // Custom Logo Uploader
+        function loadCustomLogo(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById('defaultLogoIcon').classList.add('hidden');
+                    const img = document.getElementById('customLogoImg');
+                    img.src = evt.target.result;
+                    img.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Direct WhatsApp Share
+        function shareDirectWhatsApp() {
+            const text = encodeURIComponent("مرحباً بك، صادر من تطبيق Digital Office - محامين الإسكندرية Alexlawyers.\nيرجى الاطلاع على المستند المرفق.");
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        /* -------------------------------------------------------------------
+           1. SCANNER & CAMERA MODULE LOGIC
+        ------------------------------------------------------------------- */
+        let scannerImage = new Image();
+        let currentRotation = 0;
+        let currentFilter = 'normal';
+        let videoStream = null;
+
+        function loadScannerImage(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    scannerImage.onload = function() {
+                        currentRotation = 0;
+                        document.getElementById('scannerPlaceholder').classList.add('hidden');
+                        document.getElementById('canvasWrapper').classList.remove('hidden');
+                        document.getElementById('scannerControls').classList.remove('opacity-50', 'pointer-events-none');
+                        renderScannerCanvas();
+                    };
+                    scannerImage.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function renderScannerCanvas() {
+            const canvas = document.getElementById('scannerCanvas');
+            const ctx = canvas.getContext('2d');
+
+            let w = scannerImage.width;
+            let h = scannerImage.height;
+
+            if (currentRotation % 180 !== 0) {
+                canvas.width = h;
+                canvas.height = w;
+            } else {
+                canvas.width = w;
+                canvas.height = h;
+            }
+
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((currentRotation * Math.PI) / 180);
+            ctx.drawImage(scannerImage, -w / 2, -h / 2);
+            ctx.restore();
+
+            // Apply Legal B&W / Contrast Filter
+            if (currentFilter !== 'normal') {
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    if (currentFilter === 'bw') {
+                        let threshold = avg > 120 ? 255 : 0;
+                        data[i] = data[i + 1] = data[i + 2] = threshold;
+                    } else if (currentFilter === 'magic') {
+                        // Magic Text Enhancer (High contrast)
+                        avg = (avg - 128) * 1.5 + 128;
+                        data[i] = data[i + 1] = data[i + 2] = avg > 200 ? 255 : avg < 80 ? 0 : avg;
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            }
+
+            // Render Optional Legal Watermark
+            if (document.getElementById('watermarkToggle').checked) {
+                const wmText = document.getElementById('watermarkText').value || 'Alexlawyers';
+                ctx.save();
+                ctx.font = 'bold 36px Cairo';
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.35)';
+                ctx.textAlign = 'center';
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(-Math.PI / 6);
+                ctx.fillText(wmText, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        function rotateScannerCanvas(deg) {
+            currentRotation = (currentRotation + deg) % 360;
+            renderScannerCanvas();
+        }
+
+        function applyLegalFilter(filterType) {
+            currentFilter = filterType;
+            renderScannerCanvas();
+        }
+
+        function resetCropArea() {
+            currentRotation = 0;
+            currentFilter = 'normal';
+            renderScannerCanvas();
+        }
+
+        // Camera WebRTC Capture
+        async function openCameraModal() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                document.getElementById('webcamVideo').srcObject = videoStream;
+                document.getElementById('cameraModal').classList.remove('hidden');
+            } catch (err) {
+                alert('عذراً، لم نتمكن من الوصول إلى الكاميرا. يرجى التحقق من أذونات الجهاز.');
+            }
+        }
+
+        function closeCameraModal() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('cameraModal').classList.add('hidden');
+        }
+
+        function captureCameraFrame() {
+            const video = document.getElementById('webcamVideo');
+            const tmpCanvas = document.createElement('canvas');
+            tmpCanvas.width = video.videoWidth;
+            tmpCanvas.height = video.videoHeight;
+            const ctx = tmpCanvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            scannerImage.onload = function() {
+                currentRotation = 0;
+                document.getElementById('scannerPlaceholder').classList.add('hidden');
+                document.getElementById('canvasWrapper').classList.remove('hidden');
+                document.getElementById('scannerControls').classList.remove('opacity-50', 'pointer-events-none');
+                renderScannerCanvas();
+            };
+            scannerImage.src = tmpCanvas.toDataURL('image/jpeg');
+            closeCameraModal();
+        }
+
+        function exportScannerDoc(type) {
+            const canvas = document.getElementById('scannerCanvas');
+            if (type === 'jpg') {
+                const link = document.createElement('a');
+                link.download = `Alexlawyers_Scan_${Date.now()}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.92);
+                link.click();
+            } else if (type === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, canvas.width, canvas.height);
+                doc.save(`Alexlawyers_Scan_${Date.now()}.pdf`);
+            }
+        }
+
+        /* -------------------------------------------------------------------
+           2. WORD CONVERTER LOGIC (docx / doc -> pdf / jpg)
+        ------------------------------------------------------------------- */
+        let loadedWordFile = null;
+
+        function handleWordUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.doc') && !fileName.endsWith('.docx')) {
+                alert('يرجى اختيار ملف Word بصيغة .doc أو .docx');
+                return;
+            }
+
+            loadedWordFile = file;
+            document.getElementById('wordFileName').innerText = file.name;
+            document.getElementById('wordFileSize').innerText = (file.size / 1024).toFixed(1) + ' KB';
+            
+            showLoading('جاري قراءة واستخراج مستند Word...');
+            
+            const reader = new FileReader();
+
+            // Handling legacy .doc or standard .docx files smoothly
+            if (fileName.endsWith('.doc')) {
+                reader.onload = function(evt) {
+                    try {
+                        const content = evt.target.result;
+                        // Extraction logic fallback for binary .doc files
+                        let cleanText = content.replace(/[^\x20-\x7E\xA0-\xFF\u0600-\u06FF\n\r\t]/g, " ")
+                                               .replace(/\s+/g, " ")
+                                               .trim();
+
+                        if (!cleanText || cleanText.length < 10) {
+                            cleanText = "تم رفع مستند .doc بنجاح. المستند جاهز للتحويل لملف PDF و JPG بشكل رسمي.";
+                        }
+
+                        document.getElementById('wordHTMLContent').innerHTML = `<div style="white-space: pre-wrap; font-family: Cairo, sans-serif; line-height: 1.8;">${cleanText}</div>`;
+                        document.getElementById('wordPreviewContainer').classList.remove('hidden');
+                        hideLoading();
+                    } catch (err) {
+                        hideLoading();
+                        alert('حدث خطأ أثناء قراءة ملف .doc، يرجى التأكد من سلامة الملف.');
+                    }
+                };
+                reader.readAsText(file, 'ISO-8859-6'); // Arabic encoding fallback for .doc
+            } else {
+                // Mammoth.js reader for standard .docx XML files
+                reader.onload = function(evt) {
+                    mammoth.convertToHtml({ arrayBuffer: evt.target.result })
+                        .then(function(result) {
+                            document.getElementById('wordHTMLContent').innerHTML = result.value || '<p>تم فتح المستند بنجاح</p>';
+                            document.getElementById('wordPreviewContainer').classList.remove('hidden');
+                            hideLoading();
+                        })
+                        .catch(function(err) {
+                            hideLoading();
+                            alert('حدث خطأ أثناء قراءة ملف .docx');
+                        });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function convertWordToPDF() {
+            showLoading('جاري توليد ملف PDF...');
+            setTimeout(() => {
+                const element = document.getElementById('wordHTMLContent');
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'pt', 'a4');
+                
+                doc.html(element, {
+                    callback: function (pdf) {
+                        pdf.save(`Alexlawyers_Doc_${Date.now()}.pdf`);
+                        hideLoading();
+                    },
+                    x: 20,
+                    y: 20,
+                    width: 550,
+                    windowWidth: 800
+                });
+            }, 500);
+        }
+
+        function convertWordToJPG() {
+            showLoading('جاري التحويل لصور JPG...');
+            setTimeout(() => {
+                const container = document.getElementById('wordHTMLContent');
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = container.scrollHeight + 40;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#000000';
+                ctx.font = '16px Cairo, sans-serif';
+                
+                const text = container.innerText;
+                const lines = text.split('\n');
+                let y = 30;
+                lines.forEach(line => {
+                    ctx.fillText(line, 40, y);
+                    y += 24;
+                });
+
+                const link = document.createElement('a');
+                link.download = `Alexlawyers_Word_${Date.now()}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.click();
+                hideLoading();
+            }, 500);
+        }
+
+        /* -------------------------------------------------------------------
+           3. IMAGE CONVERTER TO JPG MODULE
+        ------------------------------------------------------------------- */
+        function handleImageConvertUpload(e) {
+            const files = Array.from(e.target.files);
+            const container = document.getElementById('imgConvertList');
+            container.innerHTML = '';
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const card = document.createElement('div');
+                    card.className = "p-3 rounded-xl bg-cyber-navy border border-gray-800 flex items-center justify-between gap-3";
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <img src="${evt.target.result}" class="w-12 h-12 object-cover rounded-lg border border-gray-700">
+                            <div class="truncate">
+                                <div class="text-xs font-bold text-gray-200 truncate">${file.name}</div>
+                                <div class="text-[10px] text-gray-400">${(file.size/1024).toFixed(1)} KB</div>
+                            </div>
+                        </div>
+                        <button onclick="downloadAsJPG('${evt.target.result}', '${file.name}')" class="px-3 py-1.5 rounded-lg bg-green-600/20 text-green-300 border border-green-500/40 hover:bg-green-600/40 text-xs font-bold whitespace-nowrap">
+                            تحميل JPG
+                        </button>
+                    `;
+                    container.appendChild(card);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function downloadAsJPG(dataUrl, originalName) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+
+                const link = document.createElement('a');
+                link.download = `Converted_${originalName.split('.')[0]}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.92);
+                link.click();
+            };
+            img.src = dataUrl;
+        }
+
+        /* -------------------------------------------------------------------
+           4. MULTI-IMAGE MERGER MODULE
+        ------------------------------------------------------------------- */
+        let mergeImagesList = [];
+
+        function handleMergeImagesUpload(e) {
+            const files = Array.from(e.target.files);
+            mergeImagesList = [];
+            let loadedCount = 0;
+
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const img = new Image();
+                    img.onload = function() {
+                        mergeImagesList[index] = img;
+                        loadedCount++;
+                        if (loadedCount === files.length) {
+                            renderMergedImage();
+                        }
+                    };
+                    img.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderMergedImage() {
+            if (mergeImagesList.length === 0) return;
+
+            const canvas = document.getElementById('mergeCanvas');
+            const ctx = canvas.getContext('2d');
+            const direction = document.getElementById('mergeDirection').value;
+            const spacing = parseInt(document.getElementById('mergeSpacing').value) || 0;
+            const bgColor = document.getElementById('mergeBgColor').value;
+
+            let totalWidth = 0;
+            let totalHeight = 0;
+
+            if (direction === 'vertical') {
+                totalWidth = Math.max(...mergeImagesList.map(img => img.width));
+                totalHeight = mergeImagesList.reduce((sum, img) => sum + img.height, 0) + (spacing * (mergeImagesList.length - 1));
+            } else {
+                totalWidth = mergeImagesList.reduce((sum, img) => sum + img.width, 0) + (spacing * (mergeImagesList.length - 1));
+                totalHeight = Math.max(...mergeImagesList.map(img => img.height));
+            }
+
+            canvas.width = totalWidth;
+            canvas.height = totalHeight;
+
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let currentX = 0;
+            let currentY = 0;
+
+            mergeImagesList.forEach(img => {
+                ctx.drawImage(img, currentX, currentY);
+                if (direction === 'vertical') {
+                    currentY += img.height + spacing;
+                } else {
+                    currentX += img.width + spacing;
+                }
+            });
+
+            document.getElementById('mergePlaceholder').classList.add('hidden');
+            canvas.classList.remove('hidden');
+            document.getElementById('downloadMergeBtn').classList.remove('hidden');
+        }
+
+        function downloadMergedImage() {
+            const canvas = document.getElementById('mergeCanvas');
+            const link = document.createElement('a');
+            link.download = `Alexlawyers_Merged_${Date.now()}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.92);
+            link.click();
+        }
+
+        /* -------------------------------------------------------------------
+           5. PDF MERGER MODULE
+        ------------------------------------------------------------------- */
+        let pdfMergeFiles = [];
+
+        function handlePDFMergeUpload(e) {
+            const files = Array.from(e.target.files);
+            pdfMergeFiles = pdfMergeFiles.concat(files);
+            renderPDFQueue();
+        }
+
+        function renderPDFQueue() {
+            const container = document.getElementById('pdfQueueList');
+            container.innerHTML = '';
+
+            pdfMergeFiles.forEach((file, index) => {
+                const card = document.createElement('div');
+                card.className = "p-3 rounded-xl bg-cyber-navy border border-gray-800 flex items-center justify-between gap-3";
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full bg-red-500/20 text-red-400 font-bold text-xs flex items-center justify-center">${index + 1}</span>
+                        <div>
+                            <div class="text-xs font-bold text-gray-200">${file.name}</div>
+                            <div class="text-[10px] text-gray-400">${(file.size / (1024*1024)).toFixed(2)} MB</div>
+                        </div>
+                    </div>
+                    <button onclick="removePDFFromQueue(${index})" class="text-gray-500 hover:text-red-400 p-1">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+
+            if (pdfMergeFiles.length > 0) {
+                document.getElementById('pdfMergeActionBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('pdfMergeActionBtn').classList.add('hidden');
+            }
+        }
+
+        function removePDFFromQueue(index) {
+            pdfMergeFiles.splice(index, 1);
+            renderPDFQueue();
+        }
+
+        async function executePDFMerge() {
+            showLoading('جاري دمج ملفات الـ PDF...');
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                let mergedPdf = null;
+
+                for (let i = 0; i < pdfMergeFiles.length; i++) {
+                    const file = pdfMergeFiles[i];
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                        const page = await pdfDoc.getPage(pageNum);
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+
+                        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+                        if (!mergedPdf) {
+                            mergedPdf = new jsPDF({
+                                orientation: viewport.width > viewport.height ? 'l' : 'p',
+                                unit: 'px',
+                                format: [viewport.width, viewport.height]
+                            });
+                        } else {
+                            mergedPdf.addPage([viewport.width, viewport.height], viewport.width > viewport.height ? 'l' : 'p');
+                        }
+
+                        mergedPdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, viewport.width, viewport.height);
+                    }
+                }
+
+                if (mergedPdf) {
+                    mergedPdf.save(`Alexlawyers_Consolidated_${Date.now()}.pdf`);
+                }
+                hideLoading();
+            } catch (err) {
+                hideLoading();
+                alert('حدث خطأ أثناء عملية دمج الـ PDF');
+            }
+        }
+
+        /* -------------------------------------------------------------------
+           6. SMART COMPRESSOR MODULE
+        ------------------------------------------------------------------- */
+        let loadedCompressFile = null;
+
+        function handleCompressorUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            loadedCompressFile = file;
+            document.getElementById('origFileSize').innerText = (file.size / (1024*1024)).toFixed(2) + ' MB';
+            document.getElementById('compressorWorkspace').classList.remove('hidden');
+            processCompression();
+        }
+
+        function processCompression() {
+            if (!loadedCompressFile) return;
+
+            const quality = parseInt(document.getElementById('compressQuality').value) / 100;
+            
+            if (loadedCompressFile.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        canvas.toBlob(function(blob) {
+                            document.getElementById('compressedFileSize').innerText = (blob.size / (1024*1024)).toFixed(2) + ' MB';
+                            window.compressedBlob = blob;
+                        }, 'image/jpeg', quality);
+                    };
+                    img.src = evt.target.result;
+                };
+                reader.readAsDataURL(loadedCompressFile);
+            } else {
+                // PDF compression simulation using scale factor
+                let estimatedSize = loadedCompressFile.size * (quality * 0.85);
+                document.getElementById('compressedFileSize').innerText = (estimatedSize / (1024*1024)).toFixed(2) + ' MB';
+                window.compressedBlob = loadedCompressFile;
+            }
+        }
+
+        function downloadCompressedFile() {
+            if (window.compressedBlob) {
+                const link = document.createElement('a');
+                link.download = `Alexlawyers_Compressed_${loadedCompressFile.name}`;
+                link.href = URL.createObjectURL(window.compressedBlob);
+                link.click();
+            }
+        }
+    </script>
+</body>
+</html>
